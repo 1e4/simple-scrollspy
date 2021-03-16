@@ -1,11 +1,11 @@
 export class ScrollSpy {
   constructor(menu, options = {}) {
     if (!menu) {
-      throw new Error('First argument is query selector to your navigation.')
+      throw new Error('First argument is query selector to your navigation.');
     }
 
     if (typeof options !== 'object') {
-      throw new Error('Second argument must be instance of Object.')
+      throw new Error('Second argument must be instance of Object.');
     }
 
     let defaultOptions = {
@@ -13,68 +13,106 @@ export class ScrollSpy {
       menuActiveTarget: 'li > a',
       offset: 0,
       hrefAttribute: 'href',
-      activeClass: 'active',
-      scrollContainer: ''
-    }
+      activeClass: 'active'
+    };
 
-    this.menuList = menu instanceof HTMLElement ? menu : document.querySelector(menu)
-    this.options = Object.assign({}, defaultOptions, options)
-    
-    if(this.options.scrollContainer) {
-      this.scroller = this.options.scrollContainer instanceof HTMLElement ? this.options.scrollContainer : document.querySelector(this.options.scrollContainer)
-    } else {
-      this.scroller = window
-    }
-
-    this.sections = document.querySelectorAll(this.options.sectionClass)
-    
-    this.listen();
+    this.menuList = menu instanceof HTMLElement ? menu : document.querySelector(menu);
+    this.menu = document.getElementById('mainNav');
+    this.options = Object.assign({}, defaultOptions, options);
+    this.sections = document.querySelectorAll(this.options.sectionClass);
+    this.scrolling = false;
+    console.log('Booted', this.sections, this.menuList);
   }
 
-  listen() {
-    this.scroller.addEventListener('scroll', () => this.onScroll())
+  inView(el) {
+    var rect = el.getBoundingClientRect();
+
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /* or $(window).height() */
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth) /* or $(window).width() */
+    );
   }
 
   onScroll() {
-    const section = this.getSectionInView()
-    const menuItem = this.getMenuItemBySection(section)
+    const section = this.getSectionsInView();
+    const menuItem = this.getMenuItemBySections(section);
+
+    if(this.scrolling) return;
 
     if (menuItem) {
-      this.removeCurrentActive({ ignore: menuItem })
-      this.setActive(menuItem)
-    }
-  }
 
-  getMenuItemBySection(section) {
-    if (!section) return
-    const sectionId = section.getAttribute('id')
-    return this.menuList.querySelector(`[${this.options.hrefAttribute}="#${sectionId}"]`)
-  }
+      for (const item in menuItem) {
 
-  getSectionInView() {
-    for (let i = 0; i < this.sections.length; i++) {
-      const startAt = this.sections[i].offsetTop
-      const endAt = startAt + this.sections[i].offsetHeight
-      let currentPosition = (document.documentElement.scrollTop || document.body.scrollTop) + this.options.offset
+        this.removeCurrentActive({ ignore: menuItem[item] });
 
-      if(this.options.scrollContainer) {
-        currentPosition = (this.scroller.scrollTop) + this.options.offset
+        // Only change when menu item isn't visible
+        if (!this.inView(menuItem[item]) && !this.scrolling) {
+          console.log('menu item not in view', menuItem[item], this.menu)
+          this.scrolling = true;
+          this.menu.scrollTop = menuItem[item].offsetTop - 300;
+        }
+
+        this.setActive(menuItem[item]);
       }
-
-      const isInView = currentPosition > startAt && currentPosition <= endAt
-      if (isInView) return this.sections[i]
     }
+  }
+
+  getMenuItemBySections(section) {
+    if (!section) return;
+
+    let items = [];
+
+    for (const s in section) {
+      const id = section[s].getAttribute('id');
+      items.push(this.menuList.querySelector(`[${this.options.hrefAttribute}="#${id}"]`));
+    }
+
+    return items;
+  }
+
+  getSectionsInView() {
+    let sections = [];
+    for (let i = 0; i < this.sections.length; i++) {
+      const startAt = this.sections[i].offsetTop;
+      const endAt = startAt + this.sections[i].offsetHeight;
+      const currentPosition = (document.documentElement.scrollTop || document.body.scrollTop) + this.options.offset;
+      const isInView = currentPosition > startAt && currentPosition <= endAt;
+
+      if (isInView) {
+        sections.push(this.sections[i]);
+      }
+    }
+
+    return sections;
+  }
+
+  getSectionInViewByI(i) {
+    const startAt = this.sections[i].offsetTop;
+    const endAt = startAt + this.sections[i].offsetHeight;
+    const currentPosition = (document.documentElement.scrollTop || document.body.scrollTop) + this.options.offset;
+    return currentPosition > startAt && currentPosition <= endAt;
   }
 
   setActive(activeItem) {
-    const isActive = activeItem.classList.contains(this.options.activeClass)
-    if (!isActive) activeItem.classList.add(this.options.activeClass)
+    const isActive = activeItem.classList.contains(this.options.activeClass);
+    if (!isActive) {
+      this.scrolling = false;
+      activeItem.classList.add(this.options.activeClass);
+    }
   }
 
   removeCurrentActive({ ignore }) {
-    const { hrefAttribute, menuActiveTarget, activeClass } = this.options
-    const items = `${menuActiveTarget}.${activeClass}:not([${hrefAttribute}="${ignore.getAttribute(hrefAttribute)}"])`
-    const menuItems = this.menuList.querySelectorAll(items)
+
+    if(!ignore) return;
+
+    const {
+      hrefAttribute,
+      menuActiveTarget
+    } = this.options;
+    const items = `${menuActiveTarget}.active:not([${hrefAttribute}="${ignore.getAttribute(hrefAttribute)}"])`;
+    const menuItems = this.menuList.querySelectorAll(items);
 
     menuItems.forEach((item) => item.classList.remove(this.options.activeClass))
   }
