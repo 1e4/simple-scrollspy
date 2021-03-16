@@ -25,6 +25,13 @@ export class ScrollSpy {
   }
 
   inView(el) {
+
+    if (!el) {
+      console.log(el);
+
+      return true;
+    }
+
     var rect = el.getBoundingClientRect();
 
     return (
@@ -39,17 +46,19 @@ export class ScrollSpy {
     const section = this.getSectionsInView();
     const menuItem = this.getMenuItemBySections(section);
 
-    if(this.scrolling) return;
+    if (this.scrolling) return;
 
     if (menuItem) {
 
       for (const item in menuItem) {
 
+        if(!menuItem[item]) return;
+
         this.removeCurrentActive({ ignore: menuItem[item] });
 
         // Only change when menu item isn't visible
-        if (!this.inView(menuItem[item]) && !this.scrolling) {
-          console.log('menu item not in view', menuItem[item], this.menu)
+        if (menuItem[item] && !this.inView(menuItem[item]) && !this.scrolling) {
+          console.log('menu item not in view', menuItem[item], this.menu);
           this.scrolling = true;
           this.menu.scrollTop = menuItem[item].offsetTop - 300;
         }
@@ -105,7 +114,7 @@ export class ScrollSpy {
 
   removeCurrentActive({ ignore }) {
 
-    if(!ignore) return;
+    if (!ignore) return;
 
     const {
       hrefAttribute,
@@ -114,6 +123,6 @@ export class ScrollSpy {
     const items = `${menuActiveTarget}.active:not([${hrefAttribute}="${ignore.getAttribute(hrefAttribute)}"])`;
     const menuItems = this.menuList.querySelectorAll(items);
 
-    menuItems.forEach((item) => item.classList.remove(this.options.activeClass))
+    menuItems.forEach((item) => item.classList.remove(this.options.activeClass));
   }
 }

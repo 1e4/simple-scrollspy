@@ -1,9 +1,10 @@
 module.exports = (el, options = {}) => {
-    const { ScrollSpy } = require('./scrollspy')
-    const instance = new ScrollSpy(el, options)
+  const { ScrollSpy } = require('./scrollspy');
+  const instance = new ScrollSpy(el, options);
 
-    window.onload = instance.onScroll()
-    window.addEventListener('scroll', () => instance.onScroll())
+  window.onload = instance.onScroll();
+  window.addEventListener('scroll', () => instance.onScroll());
 
-    return instance
-}
+  window.scrollSpy = instance;
+  return instance;
+};
