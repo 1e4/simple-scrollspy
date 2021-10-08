@@ -16,12 +16,11 @@ export class ScrollSpy {
       activeClass: 'active'
     };
 
-    this.menuList = menu instanceof HTMLElement ? menu : document.querySelector(menu);
-    this.menu = document.getElementById('mainNav');
+    this.menu = menu instanceof HTMLElement ? menu : document.querySelector(menu);
     this.options = Object.assign({}, defaultOptions, options);
     this.sections = document.querySelectorAll(this.options.sectionClass);
     this.scrolling = false;
-    console.log('Booted', this.sections, this.menuList);
+    console.log('Booted', this.sections, this.menu);
   }
 
   inView(el) {
@@ -75,7 +74,7 @@ export class ScrollSpy {
 
     for (const s in section) {
       const id = section[s].getAttribute('id');
-      items.push(this.menuList.querySelector(`[${this.options.hrefAttribute}="#${id}"]`));
+      items.push(this.menu.querySelector(`[${this.options.hrefAttribute}="#${id}"]`));
     }
 
     return items;
@@ -121,7 +120,7 @@ export class ScrollSpy {
       menuActiveTarget
     } = this.options;
     const items = `${menuActiveTarget}.active:not([${hrefAttribute}="${ignore.getAttribute(hrefAttribute)}"])`;
-    const menuItems = this.menuList.querySelectorAll(items);
+    const menuItems = this.menu.querySelectorAll(items);
 
     menuItems.forEach((item) => item.classList.remove(this.options.activeClass));
   }
